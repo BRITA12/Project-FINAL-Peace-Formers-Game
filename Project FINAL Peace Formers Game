@@ -1,0 +1,132 @@
+#Brithany Sanchez
+#1/17/2024
+#Project FINAL Peace Formers Game
+#Python Final Project: Build a Text-Based Adventure Game with SimpleGUIObjective:
+#Create a text-based adventure game that includes both a graphical user interface (GUI) and text-based interaction. 
+#The game should allow the player to explore different rooms, make decisions, and interact with the game world via buttons, labels, and other graphical elements using SimpleGUI.
+#The game should also incorporate the Python concepts learned throughout the semester, including control flow, loops, functions, and data structures.
+
+
+
+import simplegui
+import random
+
+health = 100
+score = 0
+mice_collected = 0
+inventory = []
+rooms = ["Living Room", "Kitchen", "Garden", "Hallway"]
+current_room = 0
+max_mice_to_win = 5
+
+WIDTH = 400
+HEIGHT = 400
+CAT_RADIUS = 20
+MOUSE_RADIUS = 10
+
+cat_pos = [WIDTH // 2, HEIGHT // 2]
+
+mice_positions = []
+
+def start_game():
+    global health, score, mice_collected, inventory, current_room, cat_pos, mice_positions
+    health = 100
+    score = 0
+    mice_collected = 0
+    inventory = []
+    current_room = 0
+    cat_pos = [WIDTH // 2, HEIGHT // 2]  
+    mice_positions = generate_mice_positions()  
+    update_gui()
+
+def update_gui():
+    room_desc = "Current room: " + rooms[current_room]
+    health_label.set_text("Health: " + str(health))
+    score_label.set_text("Mice Collected: " + str(mice_collected) + "/" + str(max_mice_to_win))
+    room_description.set_text(room_desc)
+    frame.set_canvas_background("lightblue")
+
+def move(direction):
+    global cat_pos
+    if direction == "north":
+        cat_pos[1] -= 20  
+    elif direction == "south":
+        cat_pos[1] += 20 
+    elif direction == "east":
+        cat_pos[0] += 20  
+    elif direction == "west":
+        cat_pos[0] -= 20  
+
+    cat_pos[0] = max(min(cat_pos[0], WIDTH - CAT_RADIUS), CAT_RADIUS)
+    cat_pos[1] = max(min(cat_pos[1], HEIGHT - CAT_RADIUS), CAT_RADIUS)
+
+    random_event()
+    
+    update_gui()
+
+def random_event():
+    global health, mice_collected
+    global mice_positions
+    for mouse_pos in mice_positions[:]:
+        if (cat_pos[0] - mouse_pos[0])**2 + (cat_pos[1] - mouse_pos[1])**2 < (CAT_RADIUS + MOUSE_RADIUS)**2:
+            mice_collected += 1
+            mice_positions.remove(mouse_pos)  # Remove the collected mouse
+            inventory.append("Mouse")
+            print("You found a mouse!")
+    
+    if random.random() < 0.1:
+        health -= 20
+        print("You stepped on a trap! Lost health.")
+    
+    if check_game_status():
+        start_game()
+
+def check_game_status():
+    if mice_collected >= max_mice_to_win:
+        print("You win! You collected all the mice!")
+        return True
+    elif health <= 0:
+        print("You lose! Your health dropped to 0.")
+        return True
+    return False
+
+def move_north():
+    move("north")
+
+def move_south():
+    move("south")
+
+def move_east():
+    move("east")
+
+def move_west():
+    move("west")
+
+def generate_mice_positions():
+    positions = []
+    for _ in range(max_mice_to_win):
+        x = random.randint(MOUSE_RADIUS, WIDTH - MOUSE_RADIUS)
+        y = random.randint(MOUSE_RADIUS, HEIGHT - MOUSE_RADIUS)
+        positions.append([x, y])
+    return positions
+
+def draw(canvas):
+    canvas.draw_circle(cat_pos, CAT_RADIUS, 2, "black", "yellow")
+    
+    for mouse_pos in mice_positions:
+        canvas.draw_circle(mouse_pos, MOUSE_RADIUS, 2, "black", "gray")
+
+frame = simplegui.create_frame("Cat Adventure Game", WIDTH, HEIGHT)
+
+room_description = frame.add_label("Current Room: Living Room")
+health_label = frame.add_label("Health: 100")
+score_label = frame.add_label("Mice Collected: 0/5")
+
+frame.add_button("Move North", move_north)
+frame.add_button("Move South", move_south)
+frame.add_button("Move East", move_east)
+frame.add_button("Move West", move_west)
+
+frame.set_draw_handler(draw)
+start_game()
+frame.start()
